@@ -9,9 +9,14 @@ Terrain.tileSize = (Game.width / (Terrain.stashSize.x * 2));
 
 
 let baseLayer = new Layer("base", { level: 0 });
+let planeLayer = new Layer("plane", { level: 1 });
+let detailsLayer = new Layer("details", {level: 2});
 let background = new GameObject({ asset: new Asset.Primitive({ type: "rectangle", fill: "#000000" }), x: 0, y: 0, w: Game.width, h: Game.height });
 baseLayer.assign(background);
 
+// Seed the spawn area
+let seed = Math.floor(Math.random() * 65536);
+noise.seed(seed);
 
 
 Terrain.populate = function() {
@@ -126,7 +131,30 @@ baseLayer.assign(MapDisplay);
 
 Terrain.populate();
 
+let directionAssets = {
+    "N": new GameObject( { asset: new Asset({ image: "png/plane_n.png" }), x: (Game.width / 2) - 100, y: (Game.height / 2) - 100, w: 200, h: 200 }),
+    "NE": new GameObject( { asset: new Asset({ image: "png/plane_ne.png" }), x: (Game.width / 2) - 100, y: (Game.height / 2) - 100, w: 200, h: 200 }),
+    "NW": new GameObject( { asset: new Asset({ image: "png/plane_nw.png" }), x: (Game.width / 2) - 100, y: (Game.height / 2) - 100, w: 200, h: 200 }),
+    "S": new GameObject( { asset: new Asset({ image: "png/plane_s.png" }), x: (Game.width / 2) - 100, y: (Game.height / 2) - 100, w: 200, h: 200 }),
+    "SE": new GameObject( { asset: new Asset({ image: "png/plane_se.png" }), x: (Game.width / 2) - 100, y: (Game.height / 2) - 100, w: 200, h: 200 }),
+    "SW": new GameObject( { asset: new Asset({ image: "png/plane_sw.png" }), x: (Game.width / 2) - 100, y: (Game.height / 2) - 100, w: 200, h: 200 }),
+    "E": new GameObject( { asset: new Asset({ image: "png/plane_e.png" }), x: (Game.width / 2) - 100, y: (Game.height / 2) - 100, w: 200, h: 200 }),
+    "W": new GameObject( { asset: new Asset({ image: "png/plane_w.png" }), x: (Game.width / 2) - 100, y: (Game.height / 2) - 100, w: 200, h: 200 })
+};
+let lastPlaneDrawn = "N";
+
 movementDirection = "";
+
+// Show details
+new Asset.Font("Press Start", "ttf/pressstart.ttf");
+
+let seedText = new Text({ text: "SEED: " + seed, size: 30, font: "Press Start", fill: "#ffffff", stroke: "#000000", alignV: "bottom", alignH: "left"})
+let positionText = new Text({ text: "POSITION: " + Terrain.position.x + ", " + Terrain.position.y, size: 30, font: "Press Start", fill: "#ffffff", stroke: "#000000", alignV: "bottom", alignH: "right" })
+
+detailsLayer.assign(
+    new GameObject({ asset: seedText, x: 20, y: Game.height - 20, w: 20, h: 20}),
+    new GameObject({ asset: positionText, x: Game.width - 20, y: Game.height - 20, w: 20, h: 20})
+);
 
 Game.on("loop", ({ stamp, delta }) => {
     let moveX = 0;
@@ -162,7 +190,20 @@ Game.on("loop", ({ stamp, delta }) => {
     }
 
     Terrain.shift(moveX, moveY);
+
+    positionText.text = "POSITION: " + Terrain.position.x + ", " + Terrain.position.y;
 });
+
+Game.on("postdraw", () => {
+    if (movementDirection.length > 0) {
+        directionAssets[movementDirection].draw(planeLayer);
+        lastPlaneDrawn = movementDirection;
+    } else {
+        directionAssets[lastPlaneDrawn].draw(planeLayer);
+    }
+});
+
+
 
 Game.start();
 
